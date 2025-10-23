@@ -37,7 +37,8 @@ jobs:
 
     - name: Install dependencies
       working-directory: ./${{ matrix.service }}
-      run: npm ci
+      # CHANGED: Switched from 'npm ci' to 'npm install' to prevent failure if package-lock.json is missing.
+      run: npm install
 
     - name: Run tests
       working-directory: ./${{ matrix.service }}
