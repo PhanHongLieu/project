@@ -33,7 +33,7 @@ jobs:
       - name: Run Auth container
         run: |
           docker run -d --name auth --network eproject-net \
-            -e MONGODB_AUTH_URI=mongodb://mongo:27017/authdb \
+            -e MONGODB_AUTH_URI=mongodb://mongo:27017/auth_test \
             -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
             -p 3000:3000 \
             eproject-auth
@@ -45,7 +45,7 @@ jobs:
       - name: Run Product container
         run: |
           docker run -d --name product --network eproject-net \
-            -e MONGODB_PRODUCT_URI=mongodb://mongo:27017/productdb \
+            -e MONGODB_PRODUCT_URI=mongodb://mongo:27017/product_test \
             -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
             -e AUTH_SERVICE_URL=http://auth:3000 \
             -e RABBITMQ_URL=amqp://rabbitmq:5672 \
@@ -59,7 +59,7 @@ jobs:
       - name: Run Order container
         run: |
           docker run -d --name order --network eproject-net \
-            -e MONGODB_ORDER_URI=mongodb://mongo:27017/orderdb \
+            -e MONGODB_ORDER_URI=mongodb://mongo:27017/order_test \
             -e PRODUCT_SERVICE_URL=http://product:3001 \
             -p 3002:3002 \
             eproject-order
