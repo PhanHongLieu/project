@@ -33,9 +33,8 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-        # Removed the problematic 'cache-dependency-path' to fix the "Some specified paths were not resolved" error.
-        # The caching relies on default keys now, which is often sufficient to prevent failure.
+        # Removed 'cache: "npm"' to fix the recurring lock file resolution error in the monorepo.
+        # Dependency installation is handled correctly by the 'npm ci' step below.
 
     - name: Install dependencies
       working-directory: ./${{ matrix.service }}
