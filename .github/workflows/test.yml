@@ -133,6 +133,9 @@ jobs:
             container_name: 'auth-cicd'
             ports:
               - "3000:3000"
+            environment:
+              # Đã thêm MongoDB URI cho service Auth
+              - MONGODB_AUTH_URI=mongodb://mongo:27017/auth-prod
             networks:
               - cicd-network
 
@@ -169,6 +172,8 @@ jobs:
               - rabbitmq
             environment:
               - RABBITMQ_URL=amqp://rabbitmq-cicd:5672
+              # Đã thêm MongoDB URI cho service Product
+              - MONGODB_PRODUCT_URI=mongodb://mongo:27017/product-prod
             networks:
               - cicd-network
 
@@ -207,7 +212,8 @@ jobs:
       run: |
         docker compose -f docker-compose.prod.yml pull
         docker compose -f docker-compose.prod.yml up -d
-        sleep 20
+        # Tăng thời gian chờ lên 40 giây để tất cả services khởi động
+        sleep 40 
         docker compose -f docker-compose.prod.yml ps
 
     - name: Test services
