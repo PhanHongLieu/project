@@ -37,9 +37,14 @@ class App {
     this.app.get("/dashboard", authMiddleware, (req, res) => res.json({ message: "Welcome to dashboard" }));
   }
 
-  start() {
-    this.server = this.app.listen(3000, () => console.log("Server started on port 3000"));
+  start() { 
+    // Dùng cổng từ config
+    const port = config.port;
+    this.server = this.app.listen(port, () => {
+      console.log(`Server started on port ${port}`);
+    });
   }
+
 
   async stop() {
     await mongoose.disconnect();

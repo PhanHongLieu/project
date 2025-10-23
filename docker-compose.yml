@@ -6,9 +6,6 @@ services:
     container_name: mongo
     ports:
       - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ""
-      MONGO_INITDB_ROOT_PASSWORD: ""
     volumes:
       - mongo-data:/data/db
 
@@ -21,6 +18,8 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: phanhonglieu
       RABBITMQ_DEFAULT_PASS: 123456
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
 
   auth:
     build:
@@ -29,9 +28,6 @@ services:
     container_name: auth
     ports:
       - "3000:3000"
-    environment:
-      RABBITMQ_USER: phanhonglieu
-      RABBITMQ_PASS: 123456
     depends_on:
       - mongo
       - rabbitmq
@@ -43,9 +39,6 @@ services:
     container_name: order
     ports:
       - "3002:3002"
-    environment:
-      RABBITMQ_USER: phanhonglieu
-      RABBITMQ_PASS: 123456
     depends_on:
       - mongo
       - rabbitmq
@@ -57,9 +50,6 @@ services:
     container_name: product
     ports:
       - "3001:3001"
-    environment:
-      RABBITMQ_USER: phanhonglieu
-      RABBITMQ_PASS: 123456
     depends_on:
       - mongo
       - rabbitmq
@@ -71,9 +61,6 @@ services:
     container_name: gateway
     ports:
       - "3003:3003"
-    environment:
-      RABBITMQ_USER: phanhonglieu
-      RABBITMQ_PASS: 123456
     depends_on:
       - auth
       - product
@@ -81,3 +68,4 @@ services:
 
 volumes:
   mongo-data:
+  rabbitmq-data:

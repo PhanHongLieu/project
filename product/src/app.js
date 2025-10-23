@@ -40,7 +40,7 @@ class App {
     MessageBroker.connect();
   }
 
-  start() {
+  start(port = config.port) {
     this.server = this.app.listen(3001, () =>
       console.log("Server started on port 3001")
     );
