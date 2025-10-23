@@ -1,6 +1,7 @@
 const Product = require("../models/product");
 const messageBroker = require("../utils/messageBroker");
 const uuid = require('uuid');
+const ProductService = require("../services/productsService");
 
 /**
  * Class to hold the API implementation for the product services
@@ -10,6 +11,8 @@ class ProductController {
   constructor() {
     this.createOrder = this.createOrder.bind(this);
     this.getOrderStatus = this.getOrderStatus.bind(this);
+    this.productService = new ProductService();
+    this.getProductById = this.getProductById.bind(this);
     this.ordersMap = new Map();
 
   }
@@ -108,6 +111,16 @@ class ProductController {
       console.error(error);
       res.status(500).json({ message: "Server error" });
     }
+  }
+
+  async getProductById(req, res, next) {
+    const product = await this.productService.getProductById(req.params.id);
+    if (!product) 
+    {
+      return res.status(404).json({message: "Product not found"});
+    }
+    console.log("Find product by id:", product);
+    return res.status(200).json(product);
   }
 }
 
