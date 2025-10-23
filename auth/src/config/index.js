@@ -7,6 +7,6 @@ module.exports = {
 
   testUser: {
     username: process.env.TEST_USER || "testuser",
-    password: process.env.TEST_PASSWORD || "password"
-  }
+    password: process.env.TEST_PASS || "password",
+  },
 };
