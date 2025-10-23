@@ -10,6 +10,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     
+    # 1. Khởi động các dịch vụ phụ trợ (Dependencies)
     services:
       mongodb:
         image: mongo:6
@@ -20,6 +21,7 @@ jobs:
         image: rabbitmq:3.8-management-alpine
         ports:
           - 5672:5672
+        # Cung cấp RabbitMQ ở cổng 5672 (host: rabbitmq)
 
     strategy:
       matrix:
@@ -33,17 +35,42 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        # Removed 'cache: "npm"' to fix the recurring lock file resolution error in the monorepo.
 
+    # 2. Tạo tệp .env cho dịch vụ hiện tại (Sử dụng 'localhost' cho MongoDB và 'rabbitmq' cho RabbitMQ)
+    - name: Create .env files for Testing (Local Services)
+      run: |
+        ENV_FILE=./${{ matrix.service }}/.env
+        
+        # Các biến bí mật (secrets) chung và cấu hình dịch vụ cục bộ
+        echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> $ENV_FILE
+        # Dùng 'rabbitmq' vì nó là hostname của service container
+        echo "RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672" >> $ENV_FILE 
+        
+        if [ "${{ matrix.service }}" == "auth" ]; then
+          # Dùng 'localhost:27017' vì đây là cổng được ánh xạ (port-forwarding)
+          echo "MONGODB_AUTH_URI=mongodb://localhost:27017/auth-test" >> $ENV_FILE
+        fi
+
+        if [ "${{ matrix.service }}" == "product" ]; then
+          echo "MONGODB_PRODUCT_URI=mongodb://localhost:27017/product-test" >> $ENV_FILE
+          echo "LOGIN_TEST_USER=${{ secrets.LOGIN_TEST_USER }}" >> $ENV_FILE
+          echo "LOGIN_TEST_PASSWORD=${{ secrets.LOGIN_TEST_PASSWORD }}" >> $ENV_FILE
+        fi
+        
+        # In nội dung .env ra log (chỉ để debug)
+        echo "--- Content of $ENV_FILE ---"
+        cat $ENV_FILE
+        echo "-----------------------------------"
+      
     - name: Install dependencies
       working-directory: ./${{ matrix.service }}
-      # CHANGED: Switched from 'npm ci' to 'npm install' to prevent failure if package-lock.json is missing.
+      # Đã đổi sang 'npm install' để tránh lỗi nếu thiếu package-lock.json
       run: npm install
 
     - name: Run tests
       working-directory: ./${{ matrix.service }}
       run: npm test --if-present || echo "No test for ${{ matrix.service }}"
-      # ADDED: Allow tests to fail without cancelling subsequent jobs/steps
+      # Thêm 'continue-on-error: true' để các dịch vụ khác vẫn được build dù test thất bại
       continue-on-error: true
 
     - name: Build
@@ -76,6 +103,7 @@ jobs:
       with:
         context: ./${{ matrix.service }}
         push: true
+        # Gắn tag 'latest' và tag SHA commit
         tags: |
           ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}-cicd:latest
           ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}-cicd:${{ github.sha }}
@@ -83,6 +111,7 @@ jobs:
   deploy:
     needs: docker-build-push
     runs-on: ubuntu-latest
+    # Chỉ chạy deploy khi merge vào main
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
     steps:
@@ -126,6 +155,7 @@ jobs:
             depends_on:
               - rabbitmq
             environment:
+              # Dùng tên container làm hostname
               - RABBITMQ_URL=amqp://rabbitmq-cicd:5672
             networks:
               - cicd-network
@@ -173,6 +203,7 @@ jobs:
     - name: Ensure Docker is running
       run: docker info
     - name: Pull và start services
+      # Tải và khởi động toàn bộ stack
       run: |
         docker compose -f docker-compose.prod.yml pull
         docker compose -f docker-compose.prod.yml up -d
@@ -180,8 +211,8 @@ jobs:
         docker compose -f docker-compose.prod.yml ps
 
     - name: Test services
+      # Kiểm tra Health Check cơ bản của các dịch vụ sau khi deploy
       run: |
-        # Use simple status checks to ensure the gateway and services are reachable after deployment
         curl -fsS http://localhost:3003 && echo "Gateway OK" || echo "Gateway FAILED"
         curl -fsS http://localhost:3000 && echo "Auth OK" || echo "Auth FAILED"
         curl -fsS http://localhost:3001 && echo "Product OK" || echo "Product FAILED"
