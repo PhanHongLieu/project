@@ -28,7 +28,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Setup Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
@@ -37,15 +37,15 @@ jobs:
         cache-dependency-path: project/${{ matrix.service }}/package-lock.json
 
     - name: Install dependencies
-      working-directory: ./${{ matrix.service }}
+      working-directory: ./project/${{ matrix.service }}
       run: npm ci
 
     - name: Run tests
-      working-directory: ./${{ matrix.service }}
+      working-directory: ./project/${{ matrix.service }}
       run: npm test --if-present || echo "No test for ${{ matrix.service }}"
 
     - name: Build
-      working-directory: ./${{ matrix.service }}
+      working-directory: ./project/${{ matrix.service }}
       run: npm run build --if-present
 
   docker-build-push:
@@ -72,7 +72,7 @@ jobs:
     - name: Build and push ${{ matrix.service }}
       uses: docker/build-push-action@v5
       with:
-        context: ./${{ matrix.service }}
+        context: ./project/${{ matrix.service }}
         push: true
         tags: |
           ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}-cicd:latest
@@ -168,8 +168,10 @@ jobs:
           mongo_data:
           rabbitmq_data:
         EOF
+
     - name: Ensure Docker is running
       run: docker info
+
     - name: Pull và start services
       run: |
         docker compose -f docker-compose.prod.yml pull
